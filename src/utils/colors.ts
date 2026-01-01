@@ -82,6 +82,50 @@ export function bgToFg(colorName: string | undefined): string | undefined {
     return colorName;
 }
 
+/**
+ * Maps a percentage value (0-100) to a heat gauge color.
+ * Uses different thresholds for [1m] models vs standard models:
+ * - Standard models (200k): Conservative thresholds (40%, 55%, 70%)
+ * - [1m] models (1M): Very conservative thresholds (10%, 15%, 20%)
+ *
+ * Colors are selected to be visible in both light and dark terminal themes.
+ *
+ * @param percentage - The percentage value (0-100)
+ * @param is1MModel - Whether this is a [1m] model with 1M context (default: false)
+ * @returns A color name string compatible with getChalkColor
+ */
+export function getHeatGaugeColor(percentage: number, is1MModel = false): string {
+    // Define thresholds based on model type
+    const thresholds = is1MModel
+        ? {
+            cool: 8,      // < 8%: Cool (cyan)
+            warm: 10,     // 8-10%: Warm (green/yellow) - "pretty hot"
+            hot: 15,      // 10-15%: Hot (orange) - "very hot"
+            veryHot: 20   // 15-20%: Very hot (orange-red)
+            // 20%+: Critical (red)
+        }
+        : {
+            cool: 30,     // < 30%: Cool (cyan)
+            warm: 40,     // 30-40%: Warm (green/yellow)
+            hot: 55,      // 40-55%: Hot (orange) - "very hot"
+            veryHot: 70   // 55-70%: Very hot (orange-red)
+            // 70%+: Critical (red)
+        };
+
+    // Apply colors based on thresholds
+    if (percentage < thresholds.cool) {
+        return 'hex:00D9FF'; // Cyan - cool, plenty of space
+    } else if (percentage < thresholds.warm) {
+        return 'hex:4ADE80'; // Green - comfortable
+    } else if (percentage < thresholds.hot) {
+        return 'hex:FDE047'; // Yellow - "pretty hot", getting warm
+    } else if (percentage < thresholds.veryHot) {
+        return 'hex:FB923C'; // Orange - "very hot", concerning
+    } else {
+        return 'hex:F87171'; // Red - critical, take action
+    }
+}
+
 export function getChalkColor(colorName: string | undefined, colorLevel: 'ansi16' | 'ansi256' | 'truecolor' = 'ansi16', isBackground = false): ChalkInstance | undefined {
     if (!colorName)
         return undefined;
