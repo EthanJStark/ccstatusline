@@ -1,4 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import {
+    describe,
+    expect,
+    it
+} from 'vitest';
+
 import { getHeatGaugeColor } from '../colors';
 
 describe('getHeatGaugeColor', () => {
@@ -78,7 +83,6 @@ describe('getHeatGaugeColor', () => {
 
     describe('Backward compatibility', () => {
         it('should use standard model thresholds when is1MModel is undefined', () => {
-            // @ts-expect-error Testing backward compatibility
             const color = getHeatGaugeColor(40);
             expect(color).toBe('hex:FDE047'); // Should use standard model thresholds
         });

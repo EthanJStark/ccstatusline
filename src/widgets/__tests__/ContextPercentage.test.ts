@@ -20,7 +20,6 @@ beforeAll(() => {
 
 // Helper to strip ANSI color codes for testing
 function stripAnsi(str: string): string {
-    // eslint-disable-next-line no-control-regex
     // Match all ANSI escape sequences including truecolor (38;2;R;G;B)
     return str.replace(/\u001b\[[^m]*m/g, '');
 }
@@ -69,7 +68,8 @@ describe('ContextPercentageWidget', () => {
             const lowResult = render('claude-3-5-sonnet-20241022', 10000); // 5%
             const highResult = render('claude-3-5-sonnet-20241022', 180000); // 90%
             // The ANSI color codes should be different
-            expect(lowResult).not.toBe(highResult.replace('90.0%', '5.0%'));
+            expect(highResult).not.toBeNull();
+            expect(lowResult).not.toBe(highResult?.replace('90.0%', '5.0%'));
         });
 
         it('should apply colors in raw value mode', () => {
@@ -127,11 +127,13 @@ describe('ContextPercentageWidget', () => {
         it('should differentiate pretty hot thresholds between model types', () => {
             // 40% on standard model = yellow (pretty hot)
             const standardResult = render('claude-3-5-sonnet-20241022', 80000); // 40% of 200k
-            expect(stripAnsi(standardResult)).toContain('40.0%');
+            expect(standardResult).not.toBeNull();
+            expect(stripAnsi(standardResult!)).toContain('40.0%');
 
             // 40% on [1m] model = red (critical)
             const model1MResult = render('claude-sonnet-4-5-20250929[1m]', 400000); // 40% of 1M
-            expect(stripAnsi(model1MResult)).toContain('40.0%');
+            expect(model1MResult).not.toBeNull();
+            expect(stripAnsi(model1MResult!)).toContain('40.0%');
 
             // Colors should be very different
             expect(standardResult).not.toBe(model1MResult);
@@ -150,13 +152,15 @@ describe('ContextPercentageWidget', () => {
         it('should calculate percentage using 1M denominator for Sonnet 4.5 with [1m] suffix', () => {
             const result = render('claude-sonnet-4-5-20250929[1m]', 42000);
             // Strip ANSI codes to check the percentage value
-            expect(stripAnsi(result)).toBe('Ctx: 4.2%');
+            expect(result).not.toBeNull();
+            expect(stripAnsi(result!)).toBe('Ctx: 4.2%');
         });
 
         it('should calculate percentage using 1M denominator for Sonnet 4.5 (raw value) with [1m] suffix', () => {
             const result = render('claude-sonnet-4-5-20250929[1m]', 42000, true);
             // Strip ANSI codes to check the percentage value
-            expect(stripAnsi(result)).toBe('4.2%');
+            expect(result).not.toBeNull();
+            expect(stripAnsi(result!)).toBe('4.2%');
         });
     });
 
@@ -164,19 +168,22 @@ describe('ContextPercentageWidget', () => {
         it('should calculate percentage using 200k denominator for older Sonnet 3.5', () => {
             const result = render('claude-3-5-sonnet-20241022', 42000);
             // Strip ANSI codes to check the percentage value
-            expect(stripAnsi(result)).toBe('Ctx: 21.0%');
+            expect(result).not.toBeNull();
+            expect(stripAnsi(result!)).toBe('Ctx: 21.0%');
         });
 
         it('should calculate percentage using 200k denominator when model ID is undefined', () => {
             const result = render(undefined, 42000);
             // Strip ANSI codes to check the percentage value
-            expect(stripAnsi(result)).toBe('Ctx: 21.0%');
+            expect(result).not.toBeNull();
+            expect(stripAnsi(result!)).toBe('Ctx: 21.0%');
         });
 
         it('should calculate percentage using 200k denominator for unknown model', () => {
             const result = render('claude-unknown-model', 42000);
             // Strip ANSI codes to check the percentage value
-            expect(stripAnsi(result)).toBe('Ctx: 21.0%');
+            expect(result).not.toBeNull();
+            expect(stripAnsi(result!)).toBe('Ctx: 21.0%');
         });
     });
 });
