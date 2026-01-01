@@ -21,7 +21,8 @@ beforeAll(() => {
 // Helper to strip ANSI color codes for testing
 function stripAnsi(str: string): string {
     // eslint-disable-next-line no-control-regex
-    return str.replace(/\u001b\[\d+m/g, '');
+    // Match all ANSI escape sequences including truecolor (38;2;R;G;B)
+    return str.replace(/\u001b\[[^m]*m/g, '');
 }
 
 function render(modelId: string | undefined, contextLength: number, rawValue = false, inverse = false) {
@@ -103,6 +104,45 @@ describe('ContextPercentageWidget', () => {
             const inverseResult = render('claude-3-5-sonnet-20241022', 180000, false, true); // 10% remaining
             // The color codes should differ because displayed percentages differ (90% vs 10%)
             expect(normalResult).not.toBe(inverseResult);
+        });
+    });
+
+    describe('Model-aware heat gauge colors', () => {
+        it('should use [1m] model thresholds for Sonnet 4.5 with [1m] suffix', () => {
+            // 10% usage on [1m] model should trigger "pretty hot" color (yellow)
+            const result = render('claude-sonnet-4-5-20250929[1m]', 100000); // 10% of 1M
+            expect(result).toContain('10.0%');
+            // Verify yellow color code is present (FDE047 = rgb(253, 224, 71))
+            expect(result).toMatch(/\x1b\[38;2;253;224;71m/); // RGB for FDE047
+        });
+
+        it('should use standard model thresholds for older models', () => {
+            // 10% usage on standard model should still be cool (cyan)
+            const result = render('claude-3-5-sonnet-20241022', 20000); // 10% of 200k
+            expect(result).toContain('10.0%');
+            // Verify cyan color code is present (00D9FF = rgb(0, 217, 255))
+            expect(result).toMatch(/\x1b\[38;2;0;217;255m/); // RGB for 00D9FF
+        });
+
+        it('should differentiate pretty hot thresholds between model types', () => {
+            // 40% on standard model = yellow (pretty hot)
+            const standardResult = render('claude-3-5-sonnet-20241022', 80000); // 40% of 200k
+            expect(stripAnsi(standardResult)).toContain('40.0%');
+
+            // 40% on [1m] model = red (critical)
+            const model1MResult = render('claude-sonnet-4-5-20250929[1m]', 400000); // 40% of 1M
+            expect(stripAnsi(model1MResult)).toContain('40.0%');
+
+            // Colors should be very different
+            expect(standardResult).not.toBe(model1MResult);
+        });
+
+        it('should handle inverse mode with model-aware colors', () => {
+            // [1m] model: 85% used = 15% remaining (should be warm/hot threshold)
+            const result = render('claude-sonnet-4-5-20250929[1m]', 850000, false, true);
+            expect(result).toContain('15.0%');
+            // Should show orange color (15% threshold for [1m] models)
+            expect(result).toMatch(/\x1b\[38;2;251;146;60m/); // RGB for FB923C
         });
     });
 
