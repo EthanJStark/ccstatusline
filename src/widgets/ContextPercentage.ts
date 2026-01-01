@@ -62,6 +62,8 @@ export class ContextPercentageWidget implements Widget {
             const percentageString = `${displayPercentage.toFixed(1)}%`;
 
             // Apply heat gauge color based on displayed percentage
+            // Heat gauge colors override widget-level colors to ensure
+            // consistent visual feedback for context usage levels
             const heatColor = getHeatGaugeColor(displayPercentage);
             const chalkColor = getChalkColor(heatColor, 'truecolor');
             const coloredPercentage = chalkColor ? chalkColor(percentageString) : percentageString;
