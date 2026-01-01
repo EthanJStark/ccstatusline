@@ -83,16 +83,41 @@ export function bgToFg(colorName: string | undefined): string | undefined {
 }
 
 /**
- * Maps a percentage value (0-100) to a heat gauge color.
+ * Maps a percentage value (0-100) to a heat gauge color based on model type.
+ *
  * Uses different thresholds for [1m] models vs standard models:
- * - Standard models (200k): Conservative thresholds (40%, 55%, 70%)
- * - [1m] models (1M): Very conservative thresholds (10%, 15%, 20%)
+ * - **Standard models (200k context)**: Conservative thresholds
+ *   - < 30%: Cool cyan - plenty of space
+ *   - 30-40%: Comfortable green
+ *   - 40-55%: "Pretty hot" yellow - getting warm (40% threshold)
+ *   - 55-70%: "Very hot" orange - concerning (55% threshold)
+ *   - 70%+: Critical red - take action
  *
- * Colors are selected to be visible in both light and dark terminal themes.
+ * - **[1m] models (1M context)**: Very conservative thresholds
+ *   - < 8%: Cool cyan - plenty of space
+ *   - 8-10%: Comfortable green
+ *   - 10-15%: "Pretty hot" yellow - getting warm (10% threshold)
+ *   - 15-20%: "Very hot" orange - concerning (15% threshold)
+ *   - 20%+: Critical red - take action
  *
- * @param percentage - The percentage value (0-100)
+ * **Color Selection**: All colors are from the Tailwind CSS palette and tested
+ * for visibility in both light and dark terminal themes.
+ *
+ * **Usage**: Called by ContextPercentage widget to provide visual feedback.
+ * Heat gauge colors override widget-level color settings to ensure consistent
+ * visual warnings about context usage.
+ *
+ * @param percentage - The percentage value (0-100) to colorize
  * @param is1MModel - Whether this is a [1m] model with 1M context (default: false)
- * @returns A color name string compatible with getChalkColor
+ * @returns A color name string in hex:XXXXXX format, compatible with getChalkColor
+ *
+ * @example
+ * // Standard model at 45% usage - shows yellow (pretty hot)
+ * const color = getHeatGaugeColor(45, false); // Returns 'hex:FDE047'
+ *
+ * @example
+ * // [1m] model at 12% usage - shows yellow (pretty hot)
+ * const color = getHeatGaugeColor(12, true); // Returns 'hex:FDE047'
  */
 export function getHeatGaugeColor(percentage: number, is1MModel = false): string {
     // Define thresholds based on model type
