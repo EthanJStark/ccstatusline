@@ -21,15 +21,17 @@ export class ContextPercentageWidget implements Widget {
     getDisplayName(): string { return 'Context %'; }
     getEditorDisplay(item: WidgetItem): WidgetEditorDisplay {
         const isInverse = item.metadata?.inverse === 'true';
+        const heatGaugeOn = item.heatGaugeColors ?? true;
         const modifiers: string[] = [];
 
         if (isInverse) {
             modifiers.push('remaining');
         }
+        modifiers.push(`heat:${heatGaugeOn ? 'ON' : 'OFF'}`);
 
         return {
             displayText: this.getDisplayName(),
-            modifierText: modifiers.length > 0 ? `(${modifiers.join(', ')})` : undefined
+            modifierText: `(${modifiers.join(', ')})`
         };
     }
 
@@ -43,6 +45,9 @@ export class ContextPercentageWidget implements Widget {
                     inverse: (!currentState).toString()
                 }
             };
+        }
+        if (action === 'toggle-heat-gauge') {
+            return { ...item, heatGaugeColors: !(item.heatGaugeColors ?? true) };
         }
         return null;
     }
@@ -94,7 +99,8 @@ export class ContextPercentageWidget implements Widget {
 
     getCustomKeybinds(): CustomKeybind[] {
         return [
-            { key: 'l', label: '(l)eft/remaining', action: 'toggle-inverse' }
+            { key: 'l', label: '(l)eft/remaining', action: 'toggle-inverse' },
+            { key: 'h', label: '(h)eat gauge on/off', action: 'toggle-heat-gauge' }
         ];
     }
 
