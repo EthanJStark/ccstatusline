@@ -8,7 +8,10 @@ import type {
     WidgetEditorDisplay,
     WidgetItem
 } from '../types/Widget';
-import { getChalkColor, getHeatGaugeColor } from '../utils/colors';
+import {
+    getChalkColor,
+    getHeatGaugeColor
+} from '../utils/colors';
 import { calculateContextPercentage } from '../utils/context-percentage';
 import { getContextConfig } from '../utils/model-context';
 
@@ -77,11 +80,16 @@ export class ContextPercentageWidget implements Widget {
         }
 
         // Apply heat gauge color based on displayed percentage and model type
-        const heatColor = getHeatGaugeColor(displayPercentage, is1MModel);
-        const chalkColor = getChalkColor(heatColor, 'truecolor');
-        const coloredPercentage = chalkColor ? chalkColor(percentageString) : percentageString;
+        const useHeatGauge = item.heatGaugeColors ?? true;
 
-        return item.rawValue ? coloredPercentage : `Ctx: ${coloredPercentage}`;
+        if (useHeatGauge) {
+            const heatColor = getHeatGaugeColor(displayPercentage, is1MModel);
+            const chalkColor = getChalkColor(heatColor, 'truecolor');
+            const coloredPercentage = chalkColor ? chalkColor(percentageString) : percentageString;
+            return item.rawValue ? coloredPercentage : `Ctx: ${coloredPercentage}`;
+        }
+
+        return item.rawValue ? percentageString : `Ctx: ${percentageString}`;
     }
 
     getCustomKeybinds(): CustomKeybind[] {
