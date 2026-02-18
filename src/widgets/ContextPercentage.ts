@@ -1,3 +1,5 @@
+import chalk from 'chalk';
+
 import type { RenderContext } from '../types/RenderContext';
 import type { Settings } from '../types/Settings';
 import type {
@@ -6,7 +8,9 @@ import type {
     WidgetEditorDisplay,
     WidgetItem
 } from '../types/Widget';
+import { getChalkColor, getHeatGaugeColor } from '../utils/colors';
 import { calculateContextPercentage } from '../utils/context-percentage';
+import { getContextConfig } from '../utils/model-context';
 
 export class ContextPercentageWidget implements Widget {
     getDefaultColor(): string { return 'blue'; }
@@ -45,7 +49,12 @@ export class ContextPercentageWidget implements Widget {
 
         if (context.isPreview) {
             const previewValue = isInverse ? '90.7%' : '9.3%';
-            return item.rawValue ? previewValue : `Ctx: ${previewValue}`;
+            const previewPercentage = isInverse ? 90.7 : 9.3;
+            // For preview, assume standard model (most common case)
+            const heatColor = getHeatGaugeColor(previewPercentage, false);
+            const chalkColor = getChalkColor(heatColor, 'truecolor');
+            const coloredValue = chalkColor ? chalkColor(previewValue) : previewValue;
+            return item.rawValue ? coloredValue : `Ctx: ${coloredValue}`;
         }
 
         if (!context.contextWindow && !context.tokenMetrics) {
@@ -54,7 +63,25 @@ export class ContextPercentageWidget implements Widget {
 
         const usedPercentage = calculateContextPercentage(context);
         const displayPercentage = isInverse ? (100 - usedPercentage) : usedPercentage;
-        return item.rawValue ? `${displayPercentage.toFixed(1)}%` : `Ctx: ${displayPercentage.toFixed(1)}%`;
+        const percentageString = `${displayPercentage.toFixed(1)}%`;
+
+        // Determine if this is a 1M context model for heat gauge thresholds.
+        // Prefer native context_window data if available; fall back to model ID lookup.
+        let is1MModel = false;
+        if (context.contextWindow) {
+            is1MModel = context.contextWindow.contextWindowSize >= 800000;
+        } else if (context.tokenMetrics) {
+            const model = context.data?.model;
+            const modelId = typeof model === 'string' ? model : model?.id;
+            is1MModel = getContextConfig(modelId).maxTokens === 1000000;
+        }
+
+        // Apply heat gauge color based on displayed percentage and model type
+        const heatColor = getHeatGaugeColor(displayPercentage, is1MModel);
+        const chalkColor = getChalkColor(heatColor, 'truecolor');
+        const coloredPercentage = chalkColor ? chalkColor(percentageString) : percentageString;
+
+        return item.rawValue ? coloredPercentage : `Ctx: ${coloredPercentage}`;
     }
 
     getCustomKeybinds(): CustomKeybind[] {
