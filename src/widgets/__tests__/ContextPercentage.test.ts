@@ -201,6 +201,41 @@ describe('ContextPercentageWidget', () => {
         });
     });
 
+    describe('heatGaugeColors toggle', () => {
+        const context50Pct: RenderContext = {
+            data: { model: { id: 'claude-3-5-sonnet-20241022' } },
+            tokenMetrics: { inputTokens: 0, outputTokens: 0, cachedTokens: 0, totalTokens: 0, contextLength: 100000 }
+        };
+
+        it('renders with heat gauge color when heatGaugeColors is explicitly true', () => {
+            const widget = new ContextPercentageWidget();
+            const item: WidgetItem = { id: '1', type: 'context-percentage', color: 'green', heatGaugeColors: true };
+            const result = widget.render(item, context50Pct, DEFAULT_SETTINGS);
+            expect(result).not.toBeNull();
+            // Should NOT be plain uncolored text — heat gauge ANSI codes must be present
+            expect(result).toMatch(/\u001b\[/);
+        });
+
+        it('renders with no heat gauge color when heatGaugeColors is false', () => {
+            const widget = new ContextPercentageWidget();
+            const item: WidgetItem = { id: '1', type: 'context-percentage', color: 'green', heatGaugeColors: false };
+            const result = widget.render(item, context50Pct, DEFAULT_SETTINGS);
+            expect(result).not.toBeNull();
+            // render() must return plain text so the renderer can apply item.color
+            expect(result).not.toMatch(/\u001b\[/);
+            expect(stripAnsi(result!)).toContain('50.0%');
+        });
+
+        it('renders with heat gauge color when heatGaugeColors is undefined (default on)', () => {
+            const widget = new ContextPercentageWidget();
+            const item: WidgetItem = { id: '1', type: 'context-percentage', color: 'green' };
+            const result = widget.render(item, context50Pct, DEFAULT_SETTINGS);
+            expect(result).not.toBeNull();
+            // undefined defaults to heat gauge on — ANSI codes must be present
+            expect(result).toMatch(/\u001b\[/);
+        });
+    });
+
     describe('Older models with 200k context window', () => {
         it('should calculate percentage using 200k denominator for older Sonnet 3.5', () => {
             const result = render('claude-3-5-sonnet-20241022', 42000);
