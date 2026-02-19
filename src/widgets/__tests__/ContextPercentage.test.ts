@@ -186,4 +186,60 @@ describe('ContextPercentageWidget', () => {
             expect(stripAnsi(result!)).toBe('Ctx: 21.0%');
         });
     });
+
+    describe('Custom heat gauge thresholds from settings', () => {
+        function renderWithThresholds(
+            modelId: string | undefined,
+            contextLength: number,
+            thresholds: { standard?: { cool: number; warm: number; hot: number; veryHot: number }; extended?: { cool: number; warm: number; hot: number; veryHot: number } }
+        ) {
+            const widget = new ContextPercentageWidget();
+            const context: RenderContext = {
+                data: modelId ? { model: { id: modelId } } : undefined,
+                tokenMetrics: {
+                    inputTokens: 0,
+                    outputTokens: 0,
+                    cachedTokens: 0,
+                    totalTokens: 0,
+                    contextLength
+                }
+            };
+            const item: WidgetItem = {
+                id: 'context-percentage',
+                type: 'context-percentage'
+            };
+            const settings = {
+                ...DEFAULT_SETTINGS,
+                heatGaugeThresholds: thresholds
+            };
+            return widget.render(item, context, settings);
+        }
+
+        it('should use custom standard thresholds when configured', () => {
+            // 25% usage with custom cool=20 should produce green
+            // With defaults, 25% < 30% (cool) would produce cyan
+            const result = renderWithThresholds('claude-3-5-sonnet-20241022', 50000, { standard: { cool: 20, warm: 35, hot: 50, veryHot: 65 } });
+            expect(result).not.toBeNull();
+            // Green = rgb(74, 222, 128) = hex:4ADE80
+            expect(result).toMatch(/\x1b\[38;2;74;222;128m/);
+        });
+
+        it('should use custom extended thresholds for [1m] models', () => {
+            // 6% usage on [1m] model with custom cool=5 should produce green
+            // With defaults, 6% < 8% (cool) would produce cyan
+            const result = renderWithThresholds('claude-sonnet-4-5-20250929[1m]', 60000, { extended: { cool: 5, warm: 8, hot: 12, veryHot: 18 } });
+            expect(result).not.toBeNull();
+            // Green = rgb(74, 222, 128) = hex:4ADE80
+            expect(result).toMatch(/\x1b\[38;2;74;222;128m/);
+        });
+
+        it('should fall back to defaults when thresholds not configured for model type', () => {
+            // Only extended thresholds set; standard model uses defaults
+            const result = renderWithThresholds('claude-3-5-sonnet-20241022', 10000, { extended: { cool: 5, warm: 8, hot: 12, veryHot: 18 } });
+            expect(result).not.toBeNull();
+            // 5% on standard defaults = cyan (< 30%)
+            // Cyan = rgb(0, 217, 255) = hex:00D9FF
+            expect(result).toMatch(/\x1b\[38;2;0;217;255m/);
+        });
+    });
 });
