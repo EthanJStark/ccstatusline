@@ -87,4 +87,34 @@ describe('getHeatGaugeColor', () => {
             expect(color).toBe('hex:FDE047'); // Should use standard model thresholds
         });
     });
+
+    describe('Custom thresholds', () => {
+        it('should use custom thresholds when provided', () => {
+            // With custom cool=20, 25% should be green (above cool)
+            // Default would return cyan (25 < default cool=30)
+            const color = getHeatGaugeColor(25, false, { cool: 20, warm: 35, hot: 50, veryHot: 65 });
+            expect(color).toBe('hex:4ADE80'); // Green
+        });
+
+        it('should fall back to defaults when no custom thresholds provided', () => {
+            // 25% on standard model = cyan with defaults (< 30%)
+            const color = getHeatGaugeColor(25, false);
+            expect(color).toBe('hex:00D9FF'); // Cyan
+        });
+
+        it('should apply custom hot threshold correctly', () => {
+            const color = getHeatGaugeColor(45, false, { cool: 20, warm: 35, hot: 50, veryHot: 65 });
+            expect(color).toBe('hex:FDE047'); // Yellow — 45 is between warm=35 and hot=50
+        });
+
+        it('should apply custom veryHot threshold correctly', () => {
+            const color = getHeatGaugeColor(60, false, { cool: 20, warm: 35, hot: 50, veryHot: 65 });
+            expect(color).toBe('hex:FB923C'); // Orange — 60 is between hot=50 and veryHot=65
+        });
+
+        it('should apply custom critical threshold correctly', () => {
+            const color = getHeatGaugeColor(70, false, { cool: 20, warm: 35, hot: 50, veryHot: 65 });
+            expect(color).toBe('hex:F87171'); // Red — 70 >= veryHot=65
+        });
+    });
 });

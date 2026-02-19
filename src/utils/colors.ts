@@ -1,6 +1,7 @@
 import chalk, { type ChalkInstance } from 'chalk';
 
 import type { ColorEntry } from '../types/ColorEntry';
+import type { HeatGaugeThresholdSet } from '../types/Settings';
 
 // Re-export for backward compatibility
 export type { ColorEntry };
@@ -119,9 +120,9 @@ export function bgToFg(colorName: string | undefined): string | undefined {
  * // [1m] model at 12% usage - shows yellow (pretty hot)
  * const color = getHeatGaugeColor(12, true); // Returns 'hex:FDE047'
  */
-export function getHeatGaugeColor(percentage: number, is1MModel = false): string {
+export function getHeatGaugeColor(percentage: number, is1MModel = false, customThresholds?: HeatGaugeThresholdSet): string {
     // Define thresholds based on model type
-    const thresholds = is1MModel
+    const thresholds = customThresholds ?? (is1MModel
         ? {
             cool: 8,      // < 8%: Cool (cyan)
             warm: 10,     // 8-10%: Warm (green/yellow) - "pretty hot"
@@ -135,7 +136,7 @@ export function getHeatGaugeColor(percentage: number, is1MModel = false): string
             hot: 55,      // 40-55%: Hot (orange) - "very hot"
             veryHot: 70   // 55-70%: Very hot (orange-red)
             // 70%+: Critical (red)
-        };
+        });
 
     // Apply colors based on thresholds
     if (percentage < thresholds.cool) {
