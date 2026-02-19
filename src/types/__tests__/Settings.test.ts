@@ -1,4 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import {
+    describe,
+    expect,
+    it
+} from 'vitest';
+
 import { SettingsSchema } from '../Settings';
 
 describe('SettingsSchema heatGaugeThresholds', () => {
@@ -8,20 +13,12 @@ describe('SettingsSchema heatGaugeThresholds', () => {
     });
 
     it('should accept valid standard thresholds', () => {
-        const result = SettingsSchema.safeParse({
-            heatGaugeThresholds: {
-                standard: { cool: 20, warm: 35, hot: 50, veryHot: 65 }
-            }
-        });
+        const result = SettingsSchema.safeParse({ heatGaugeThresholds: { standard: { cool: 20, warm: 35, hot: 50, veryHot: 65 } } });
         expect(result.success).toBe(true);
     });
 
     it('should accept valid extended thresholds', () => {
-        const result = SettingsSchema.safeParse({
-            heatGaugeThresholds: {
-                extended: { cool: 5, warm: 8, hot: 12, veryHot: 18 }
-            }
-        });
+        const result = SettingsSchema.safeParse({ heatGaugeThresholds: { extended: { cool: 5, warm: 8, hot: 12, veryHot: 18 } } });
         expect(result.success).toBe(true);
     });
 
@@ -36,56 +33,32 @@ describe('SettingsSchema heatGaugeThresholds', () => {
     });
 
     it('should reject thresholds where cool >= warm', () => {
-        const result = SettingsSchema.safeParse({
-            heatGaugeThresholds: {
-                standard: { cool: 40, warm: 35, hot: 50, veryHot: 65 }
-            }
-        });
+        const result = SettingsSchema.safeParse({ heatGaugeThresholds: { standard: { cool: 40, warm: 35, hot: 50, veryHot: 65 } } });
         expect(result.success).toBe(false);
     });
 
     it('should reject thresholds where warm >= hot', () => {
-        const result = SettingsSchema.safeParse({
-            heatGaugeThresholds: {
-                standard: { cool: 20, warm: 50, hot: 50, veryHot: 65 }
-            }
-        });
+        const result = SettingsSchema.safeParse({ heatGaugeThresholds: { standard: { cool: 20, warm: 50, hot: 50, veryHot: 65 } } });
         expect(result.success).toBe(false);
     });
 
     it('should reject thresholds where hot >= veryHot', () => {
-        const result = SettingsSchema.safeParse({
-            heatGaugeThresholds: {
-                standard: { cool: 20, warm: 35, hot: 70, veryHot: 65 }
-            }
-        });
+        const result = SettingsSchema.safeParse({ heatGaugeThresholds: { standard: { cool: 20, warm: 35, hot: 70, veryHot: 65 } } });
         expect(result.success).toBe(false);
     });
 
     it('should reject thresholds below 0', () => {
-        const result = SettingsSchema.safeParse({
-            heatGaugeThresholds: {
-                standard: { cool: -5, warm: 35, hot: 50, veryHot: 65 }
-            }
-        });
+        const result = SettingsSchema.safeParse({ heatGaugeThresholds: { standard: { cool: -5, warm: 35, hot: 50, veryHot: 65 } } });
         expect(result.success).toBe(false);
     });
 
     it('should reject thresholds above 100', () => {
-        const result = SettingsSchema.safeParse({
-            heatGaugeThresholds: {
-                standard: { cool: 20, warm: 35, hot: 50, veryHot: 105 }
-            }
-        });
+        const result = SettingsSchema.safeParse({ heatGaugeThresholds: { standard: { cool: 20, warm: 35, hot: 50, veryHot: 105 } } });
         expect(result.success).toBe(false);
     });
 
     it('should reject partial threshold objects (missing fields)', () => {
-        const result = SettingsSchema.safeParse({
-            heatGaugeThresholds: {
-                standard: { cool: 20, warm: 35 }
-            }
-        });
+        const result = SettingsSchema.safeParse({ heatGaugeThresholds: { standard: { cool: 20, warm: 35 } } });
         expect(result.success).toBe(false);
     });
 });

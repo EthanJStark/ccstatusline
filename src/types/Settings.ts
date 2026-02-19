@@ -28,7 +28,7 @@ const HeatGaugeThresholdSetSchema = z.object({
     hot: z.number().min(0).max(100),
     veryHot: z.number().min(0).max(100)
 }).refine(
-    (t) => t.cool < t.warm && t.warm < t.hot && t.hot < t.veryHot,
+    t => t.cool < t.warm && t.warm < t.hot && t.hot < t.veryHot,
     { message: 'Thresholds must be strictly ascending: cool < warm < hot < veryHot' }
 );
 
