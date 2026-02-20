@@ -174,7 +174,7 @@ describe('ContextPercentageWidget', () => {
                 contextWindow: { totalInputTokens: 100000, contextWindowSize: 200000 }
             };
             const result = widget.render(item, context, DEFAULT_SETTINGS);
-            expect(result).toBe('Ctx: 50.0%'); // 100000/200000
+            expect(stripAnsi(result!)).toBe('Ctx: 50.0%'); // 100000/200000
         });
 
         it('should use context_window_size as denominator even with [1m] model', () => {
@@ -186,7 +186,7 @@ describe('ContextPercentageWidget', () => {
                 contextWindow: { totalInputTokens: 100000, contextWindowSize: 1000000 }
             };
             const result = widget.render(item, context, DEFAULT_SETTINGS);
-            expect(result).toBe('Ctx: 10.0%'); // 100000/1000000
+            expect(stripAnsi(result!)).toBe('Ctx: 10.0%'); // 100000/1000000
         });
 
         it('should fall back to tokenMetrics when context_window is absent', () => {
@@ -197,7 +197,7 @@ describe('ContextPercentageWidget', () => {
                 tokenMetrics: { inputTokens: 0, outputTokens: 0, cachedTokens: 0, totalTokens: 0, contextLength: 50000 }
             };
             const result = widget.render(item, context, DEFAULT_SETTINGS);
-            expect(result).toBe('Ctx: 25.0%'); // 50000/200000
+            expect(stripAnsi(result!)).toBe('Ctx: 25.0%'); // 50000/200000
         });
     });
 

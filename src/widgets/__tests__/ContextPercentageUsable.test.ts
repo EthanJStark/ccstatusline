@@ -57,7 +57,7 @@ describe('ContextPercentageUsableWidget', () => {
     describe('with context_window data (Claude Code v2.0.65+)', () => {
         it('should use context_window data when available', () => {
             const widget = new ContextPercentageUsableWidget();
-            const item: WidgetItem = { id: '1', type: 'context-percentage-usable' };
+            const item: WidgetItem = { id: '1', type: 'context-percentage-usable', heatGaugeColors: false };
             const context: RenderContext = {
                 data: { model: { id: 'claude-sonnet-4-6' } },
                 tokenMetrics: { inputTokens: 0, outputTokens: 0, cachedTokens: 0, totalTokens: 0, contextLength: 50000 },
@@ -69,7 +69,7 @@ describe('ContextPercentageUsableWidget', () => {
 
         it('should fall back to tokenMetrics when context_window is absent', () => {
             const widget = new ContextPercentageUsableWidget();
-            const item: WidgetItem = { id: '1', type: 'context-percentage-usable' };
+            const item: WidgetItem = { id: '1', type: 'context-percentage-usable', heatGaugeColors: false };
             const context: RenderContext = {
                 data: { model: { id: 'claude-sonnet-4-6' } },
                 tokenMetrics: { inputTokens: 0, outputTokens: 0, cachedTokens: 0, totalTokens: 0, contextLength: 50000 }
