@@ -12,6 +12,7 @@ import {
     getChalkColor,
     getHeatGaugeColor
 } from '../utils/colors';
+import { calculateContextPercentage } from '../utils/context-percentage';
 import { getContextConfig } from '../utils/model-context';
 
 export class ContextPercentageWidget implements Widget {
@@ -57,30 +58,37 @@ export class ContextPercentageWidget implements Widget {
             const chalkColor = getChalkColor(heatColor, 'truecolor');
             const coloredValue = chalkColor ? chalkColor(previewValue) : previewValue;
             return item.rawValue ? coloredValue : `Ctx: ${coloredValue}`;
-        } else if (context.tokenMetrics) {
+        }
+
+        if (!context.contextWindow && !context.tokenMetrics) {
+            return null;
+        }
+
+        const usedPercentage = calculateContextPercentage(context);
+        const displayPercentage = isInverse ? (100 - usedPercentage) : usedPercentage;
+        const percentageString = `${displayPercentage.toFixed(1)}%`;
+
+        // Determine if this is a [1m] model for heat gauge thresholds
+        let is1MModel: boolean;
+        if (context.contextWindow) {
+            is1MModel = context.contextWindow.contextWindowSize >= 1000000;
+        } else {
             const model = context.data?.model;
             const modelId = typeof model === 'string' ? model : model?.id;
-            const contextConfig = getContextConfig(modelId);
-            const usedPercentage = Math.min(100, (context.tokenMetrics.contextLength / contextConfig.maxTokens) * 100);
-            const displayPercentage = isInverse ? (100 - usedPercentage) : usedPercentage;
-            const percentageString = `${displayPercentage.toFixed(1)}%`;
-
-            // Determine if this is a [1m] model for heat gauge thresholds
-            const is1MModel = contextConfig.maxTokens === 1000000;
-
-            // Apply heat gauge color based on displayed percentage and model type
-            // Heat gauge colors override widget-level colors to ensure
-            // consistent visual feedback for context usage levels
-            const customThresholds = is1MModel
-                ? settings.heatGaugeThresholds?.extended
-                : settings.heatGaugeThresholds?.standard;
-            const heatColor = getHeatGaugeColor(displayPercentage, is1MModel, customThresholds);
-            const chalkColor = getChalkColor(heatColor, 'truecolor');
-            const coloredPercentage = chalkColor ? chalkColor(percentageString) : percentageString;
-
-            return item.rawValue ? coloredPercentage : `Ctx: ${coloredPercentage}`;
+            is1MModel = getContextConfig(modelId).maxTokens === 1000000;
         }
-        return null;
+
+        // Apply heat gauge color based on displayed percentage and model type
+        // Heat gauge colors override widget-level colors to ensure
+        // consistent visual feedback for context usage levels
+        const customThresholds = is1MModel
+            ? settings.heatGaugeThresholds?.extended
+            : settings.heatGaugeThresholds?.standard;
+        const heatColor = getHeatGaugeColor(displayPercentage, is1MModel, customThresholds);
+        const chalkColor = getChalkColor(heatColor, 'truecolor');
+        const coloredPercentage = chalkColor ? chalkColor(percentageString) : percentageString;
+
+        return item.rawValue ? coloredPercentage : `Ctx: ${coloredPercentage}`;
     }
 
     getCustomKeybinds(): CustomKeybind[] {

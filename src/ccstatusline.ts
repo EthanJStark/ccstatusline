@@ -15,6 +15,7 @@ import {
     saveSettings
 } from './utils/config';
 import {
+    formatDurationMs,
     getBlockMetrics,
     getSessionDuration,
     getTokenMetrics
@@ -81,8 +82,12 @@ async function renderMultipleLines(data: StatusJSON) {
     }
 
     let sessionDuration: string | null = null;
-    if (hasSessionClock && data.transcript_path) {
-        sessionDuration = await getSessionDuration(data.transcript_path);
+    if (hasSessionClock) {
+        if (data.cost?.total_duration_ms !== undefined) {
+            sessionDuration = formatDurationMs(data.cost.total_duration_ms);
+        } else if (data.transcript_path) {
+            sessionDuration = await getSessionDuration(data.transcript_path);
+        }
     }
 
     let blockMetrics: BlockMetrics | null = null;
@@ -90,10 +95,22 @@ async function renderMultipleLines(data: StatusJSON) {
         blockMetrics = getBlockMetrics();
     }
 
+    // Map context_window from Claude Code input (v2.0.65+)
+    // Only use native path when current_usage is present (actual context occupancy).
+    // total_input_tokens is cumulative billing cost and severely undercounts with prompt caching.
+    // Without current_usage, fall through to transcript-based calculation.
+    const contextWindow = data.context_window?.current_usage ? {
+        totalInputTokens: (data.context_window.current_usage.input_tokens ?? 0)
+            + (data.context_window.current_usage.cache_creation_input_tokens ?? 0)
+            + (data.context_window.current_usage.cache_read_input_tokens ?? 0),
+        contextWindowSize: data.context_window.context_window_size ?? 0
+    } : null;
+
     // Create render context
     const context: RenderContext = {
         data,
         tokenMetrics,
+        contextWindow,
         sessionDuration,
         blockMetrics,
         isPreview: false
