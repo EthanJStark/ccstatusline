@@ -74,10 +74,7 @@ export const SettingsSchema = z.object({
         message: z.string().nullable().optional(),
         remaining: z.number().nullable().optional()
     }).optional(),
-    heatGaugeThresholds: z.object({
-        standard: HeatGaugeThresholdSetSchema.optional(),
-        extended: HeatGaugeThresholdSetSchema.optional()
-    }).optional()
+    heatGaugeThresholds: HeatGaugeThresholdSetSchema.optional()
 });
 
 // Inferred type from schema

@@ -57,7 +57,7 @@ export class ContextPercentageUsableWidget implements Widget {
             const previewValue = isInverse ? '88.4%' : '11.6%';
             const previewPercentage = isInverse ? 88.4 : 11.6;
             if (useHeatGauge) {
-                const heatColor = getHeatGaugeColor(previewPercentage, false, settings.heatGaugeThresholds?.standard);
+                const heatColor = getHeatGaugeColor(previewPercentage, settings.heatGaugeThresholds);
                 const chalkColor = getChalkColor(heatColor, 'truecolor');
                 const coloredValue = chalkColor ? chalkColor(previewValue) : previewValue;
                 return item.rawValue ? coloredValue : `Ctx(u): ${coloredValue}`;
@@ -73,11 +73,7 @@ export class ContextPercentageUsableWidget implements Widget {
             const percentageString = `${displayPercentage.toFixed(1)}%`;
 
             if (useHeatGauge) {
-                const is1MModel = context.contextWindow.contextWindowSize >= 800000;
-                const customThresholds = is1MModel
-                    ? settings.heatGaugeThresholds?.extended
-                    : settings.heatGaugeThresholds?.standard;
-                const heatColor = getHeatGaugeColor(displayPercentage, is1MModel, customThresholds);
+                const heatColor = getHeatGaugeColor(displayPercentage, settings.heatGaugeThresholds);
                 const chalkColor = getChalkColor(heatColor, 'truecolor');
                 const coloredPercentage = chalkColor ? chalkColor(percentageString) : percentageString;
                 return item.rawValue ? coloredPercentage : `Ctx(u): ${coloredPercentage}`;
@@ -95,11 +91,7 @@ export class ContextPercentageUsableWidget implements Widget {
             const percentageString = `${displayPercentage.toFixed(1)}%`;
 
             if (useHeatGauge) {
-                const is1MModel = contextConfig.maxTokens === 1000000;
-                const customThresholds = is1MModel
-                    ? settings.heatGaugeThresholds?.extended
-                    : settings.heatGaugeThresholds?.standard;
-                const heatColor = getHeatGaugeColor(displayPercentage, is1MModel, customThresholds);
+                const heatColor = getHeatGaugeColor(displayPercentage, settings.heatGaugeThresholds);
                 const chalkColor = getChalkColor(heatColor, 'truecolor');
                 const coloredPercentage = chalkColor ? chalkColor(percentageString) : percentageString;
                 return item.rawValue ? coloredPercentage : `Ctx(u): ${coloredPercentage}`;

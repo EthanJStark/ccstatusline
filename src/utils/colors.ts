@@ -84,59 +84,42 @@ export function bgToFg(colorName: string | undefined): string | undefined {
 }
 
 /**
- * Maps a percentage value (0-100) to a heat gauge color based on model type.
+ * Maps a percentage value (0-100) to a heat gauge color.
  *
- * Uses different thresholds for [1m] models vs standard models:
- * - **Standard models (200k context)**: Conservative thresholds
- *   - < 30%: Cool cyan - plenty of space
- *   - 30-40%: Comfortable green
- *   - 40-55%: "Pretty hot" yellow - getting warm (40% threshold)
- *   - 55-70%: "Very hot" orange - concerning (55% threshold)
- *   - 70%+: Critical red - take action
- *
- * - **[1m] models (1M context)**: Very conservative thresholds
- *   - < 8%: Cool cyan - plenty of space
- *   - 8-10%: Comfortable green
- *   - 10-15%: "Pretty hot" yellow - getting warm (10% threshold)
- *   - 15-20%: "Very hot" orange - concerning (15% threshold)
- *   - 20%+: Critical red - take action
+ * Default thresholds: cool=30, warm=40, hot=55, veryHot=70
+ * - < 30%: Cool cyan - plenty of space
+ * - 30-40%: Comfortable green
+ * - 40-55%: "Pretty hot" yellow - getting warm
+ * - 55-70%: "Very hot" orange - concerning
+ * - 70%+: Critical red - take action
  *
  * **Color Selection**: All colors are from the Tailwind CSS palette and tested
  * for visibility in both light and dark terminal themes.
  *
- * **Usage**: Called by ContextPercentage widget to provide visual feedback.
+ * **Usage**: Called by ContextPercentage widgets to provide visual feedback.
  * Heat gauge colors override widget-level color settings to ensure consistent
  * visual warnings about context usage.
  *
  * @param percentage - The percentage value (0-100) to colorize
- * @param is1MModel - Whether this is a [1m] model with 1M context (default: false)
+ * @param customThresholds - Optional custom thresholds that override defaults
  * @returns A color name string in hex:XXXXXX format, compatible with getChalkColor
  *
  * @example
- * // Standard model at 45% usage - shows yellow (pretty hot)
- * const color = getHeatGaugeColor(45, false); // Returns 'hex:FDE047'
+ * // 45% usage - shows yellow (pretty hot)
+ * const color = getHeatGaugeColor(45); // Returns 'hex:FDE047'
  *
  * @example
- * // [1m] model at 12% usage - shows yellow (pretty hot)
- * const color = getHeatGaugeColor(12, true); // Returns 'hex:FDE047'
+ * // Custom thresholds
+ * const color = getHeatGaugeColor(25, { cool: 20, warm: 35, hot: 50, veryHot: 65 }); // Returns 'hex:4ADE80'
  */
-export function getHeatGaugeColor(percentage: number, is1MModel = false, customThresholds?: HeatGaugeThresholdSet): string {
-    // Define thresholds based on model type
-    const thresholds = customThresholds ?? (is1MModel
-        ? {
-            cool: 8,      // < 8%: Cool (cyan)
-            warm: 10,     // 8-10%: Warm (green/yellow) - "pretty hot"
-            hot: 15,      // 10-15%: Hot (orange) - "very hot"
-            veryHot: 20   // 15-20%: Very hot (orange-red)
-            // 20%+: Critical (red)
-        }
-        : {
-            cool: 30,     // < 30%: Cool (cyan)
-            warm: 40,     // 30-40%: Warm (green/yellow)
-            hot: 55,      // 40-55%: Hot (orange) - "very hot"
-            veryHot: 70   // 55-70%: Very hot (orange-red)
-            // 70%+: Critical (red)
-        });
+export function getHeatGaugeColor(percentage: number, customThresholds?: HeatGaugeThresholdSet): string {
+    const thresholds = customThresholds ?? {
+        cool: 30,     // < 30%: Cool (cyan)
+        warm: 40,     // 30-40%: Warm (green/yellow)
+        hot: 55,      // 40-55%: Hot (orange) - "very hot"
+        veryHot: 70   // 55-70%: Very hot (orange-red)
+        // 70%+: Critical (red)
+    };
 
     // Apply colors based on thresholds
     if (percentage < thresholds.cool) {

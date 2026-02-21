@@ -107,47 +107,6 @@ describe('ContextPercentageWidget', () => {
         });
     });
 
-    describe('Model-aware heat gauge colors', () => {
-        it('should use [1m] model thresholds for Sonnet 4.5 with [1m] suffix', () => {
-            // 10% usage on [1m] model should trigger "pretty hot" color (yellow)
-            const result = render('claude-sonnet-4-5-20250929[1m]', 100000); // 10% of 1M
-            expect(result).toContain('10.0%');
-            // Verify yellow color code is present (FDE047 = rgb(253, 224, 71))
-            expect(result).toMatch(/\x1b\[38;2;253;224;71m/); // RGB for FDE047
-        });
-
-        it('should use standard model thresholds for older models', () => {
-            // 10% usage on standard model should still be cool (cyan)
-            const result = render('claude-3-5-sonnet-20241022', 20000); // 10% of 200k
-            expect(result).toContain('10.0%');
-            // Verify cyan color code is present (00D9FF = rgb(0, 217, 255))
-            expect(result).toMatch(/\x1b\[38;2;0;217;255m/); // RGB for 00D9FF
-        });
-
-        it('should differentiate pretty hot thresholds between model types', () => {
-            // 40% on standard model = yellow (pretty hot)
-            const standardResult = render('claude-3-5-sonnet-20241022', 80000); // 40% of 200k
-            expect(standardResult).not.toBeNull();
-            expect(stripAnsi(standardResult!)).toContain('40.0%');
-
-            // 40% on [1m] model = red (critical)
-            const model1MResult = render('claude-sonnet-4-5-20250929[1m]', 400000); // 40% of 1M
-            expect(model1MResult).not.toBeNull();
-            expect(stripAnsi(model1MResult!)).toContain('40.0%');
-
-            // Colors should be very different
-            expect(standardResult).not.toBe(model1MResult);
-        });
-
-        it('should handle inverse mode with model-aware colors', () => {
-            // [1m] model: 85% used = 15% remaining (should be warm/hot threshold)
-            const result = render('claude-sonnet-4-5-20250929[1m]', 850000, false, true);
-            expect(result).toContain('15.0%');
-            // Should show orange color (15% threshold for [1m] models)
-            expect(result).toMatch(/\x1b\[38;2;251;146;60m/); // RGB for FB923C
-        });
-    });
-
     describe('Sonnet 4.5 with 1M context window', () => {
         it('should calculate percentage using 1M denominator for Sonnet 4.5 with [1m] suffix', () => {
             const result = render('claude-sonnet-4-5-20250929[1m]', 42000);
@@ -191,7 +150,7 @@ describe('ContextPercentageWidget', () => {
         function renderWithThresholds(
             modelId: string | undefined,
             contextLength: number,
-            thresholds: { standard?: { cool: number; warm: number; hot: number; veryHot: number }; extended?: { cool: number; warm: number; hot: number; veryHot: number } }
+            thresholds: { cool: number; warm: number; hot: number; veryHot: number } | undefined
         ) {
             const widget = new ContextPercentageWidget();
             const context: RenderContext = {
@@ -215,29 +174,19 @@ describe('ContextPercentageWidget', () => {
             return widget.render(item, context, settings);
         }
 
-        it('should use custom standard thresholds when configured', () => {
+        it('should use custom thresholds when configured', () => {
             // 25% usage with custom cool=20 should produce green
             // With defaults, 25% < 30% (cool) would produce cyan
-            const result = renderWithThresholds('claude-3-5-sonnet-20241022', 50000, { standard: { cool: 20, warm: 35, hot: 50, veryHot: 65 } });
+            const result = renderWithThresholds('claude-3-5-sonnet-20241022', 50000, { cool: 20, warm: 35, hot: 50, veryHot: 65 });
             expect(result).not.toBeNull();
             // Green = rgb(74, 222, 128) = hex:4ADE80
             expect(result).toMatch(/\x1b\[38;2;74;222;128m/);
         });
 
-        it('should use custom extended thresholds for [1m] models', () => {
-            // 6% usage on [1m] model with custom cool=5 should produce green
-            // With defaults, 6% < 8% (cool) would produce cyan
-            const result = renderWithThresholds('claude-sonnet-4-5-20250929[1m]', 60000, { extended: { cool: 5, warm: 8, hot: 12, veryHot: 18 } });
+        it('should fall back to defaults when no custom thresholds configured', () => {
+            // 5% usage with no custom thresholds = cyan (< default cool=30%)
+            const result = renderWithThresholds('claude-3-5-sonnet-20241022', 10000, undefined);
             expect(result).not.toBeNull();
-            // Green = rgb(74, 222, 128) = hex:4ADE80
-            expect(result).toMatch(/\x1b\[38;2;74;222;128m/);
-        });
-
-        it('should fall back to defaults when thresholds not configured for model type', () => {
-            // Only extended thresholds set; standard model uses defaults
-            const result = renderWithThresholds('claude-3-5-sonnet-20241022', 10000, { extended: { cool: 5, warm: 8, hot: 12, veryHot: 18 } });
-            expect(result).not.toBeNull();
-            // 5% on standard defaults = cyan (< 30%)
             // Cyan = rgb(0, 217, 255) = hex:00D9FF
             expect(result).toMatch(/\x1b\[38;2;0;217;255m/);
         });

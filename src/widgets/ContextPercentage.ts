@@ -52,8 +52,7 @@ export class ContextPercentageWidget implements Widget {
         if (context.isPreview) {
             const previewValue = isInverse ? '90.7%' : '9.3%';
             const previewPercentage = isInverse ? 90.7 : 9.3;
-            // For preview, assume standard model (most common case)
-            const heatColor = getHeatGaugeColor(previewPercentage, false, settings.heatGaugeThresholds?.standard);
+            const heatColor = getHeatGaugeColor(previewPercentage, settings.heatGaugeThresholds);
             const chalkColor = getChalkColor(heatColor, 'truecolor');
             const coloredValue = chalkColor ? chalkColor(previewValue) : previewValue;
             return item.rawValue ? coloredValue : `Ctx: ${coloredValue}`;
@@ -65,16 +64,10 @@ export class ContextPercentageWidget implements Widget {
             const displayPercentage = isInverse ? (100 - usedPercentage) : usedPercentage;
             const percentageString = `${displayPercentage.toFixed(1)}%`;
 
-            // Determine if this is a [1m] model for heat gauge thresholds
-            const is1MModel = contextConfig.maxTokens === 1000000;
-
-            // Apply heat gauge color based on displayed percentage and model type
+            // Apply heat gauge color based on displayed percentage
             // Heat gauge colors override widget-level colors to ensure
             // consistent visual feedback for context usage levels
-            const customThresholds = is1MModel
-                ? settings.heatGaugeThresholds?.extended
-                : settings.heatGaugeThresholds?.standard;
-            const heatColor = getHeatGaugeColor(displayPercentage, is1MModel, customThresholds);
+            const heatColor = getHeatGaugeColor(displayPercentage, settings.heatGaugeThresholds);
             const chalkColor = getChalkColor(heatColor, 'truecolor');
             const coloredPercentage = chalkColor ? chalkColor(percentageString) : percentageString;
 
